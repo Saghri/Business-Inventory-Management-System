@@ -1,7 +1,5 @@
-# gui.py
-
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, simpledialog
 from tkinter import ttk
 from inventory_manager import InventoryManager
 from product import Product
@@ -13,7 +11,10 @@ class InventoryGUI:
         self.root.geometry("900x600")  # Enlarged Window
 
         self.inventory_manager = inventory_manager
-        self.category_var = tk.StringVar(value="All")
+        self.selected_product_name = None  # Track the selected product for deletion or updating
+
+        # Categories list
+        self.categories = ["Electronics", "Furniture", "Grocery", "Miscellaneous"]
 
         # Create widgets
         self.create_widgets()
@@ -21,60 +22,65 @@ class InventoryGUI:
     def create_widgets(self):
         # Category Label
         self.category_label = tk.Label(self.root, text="Select Category")
-        self.category_label.grid(row=0, column=0)
+        self.category_label.grid(row=0, column=0, padx=10, pady=10)
 
         # Category ComboBox
-        self.category_combo = ttk.Combobox(self.root, textvariable=self.category_var, values=["All", "Electronics", "Furniture", "Grocery", "Miscellaneous"])
-        self.category_combo.grid(row=0, column=1)
-        self.category_combo.bind("<<ComboboxSelected>>", self.refresh_products)
+        self.category_combo = ttk.Combobox(self.root, values=self.categories)
+        self.category_combo.grid(row=0, column=1, padx=10, pady=10)
+        self.category_combo.set("Select Category")
+        self.category_combo.bind("<<ComboboxSelected>>", self.on_category_selected)
+
+        # Add New Category Button
+        self.add_category_button = tk.Button(self.root, text="Add New Category", command=self.add_new_category)
+        self.add_category_button.grid(row=0, column=2, padx=10, pady=10)
 
         # Product Name Label
         self.name_label = tk.Label(self.root, text="Product Name")
-        self.name_label.grid(row=1, column=0)
+        self.name_label.grid(row=1, column=0, padx=10, pady=10)
 
         # Product Name Entry
         self.name_entry = tk.Entry(self.root, width=30)
-        self.name_entry.grid(row=1, column=1)
+        self.name_entry.grid(row=1, column=1, padx=10, pady=10)
 
         # Price Label
         self.price_label = tk.Label(self.root, text="Price")
-        self.price_label.grid(row=2, column=0)
+        self.price_label.grid(row=2, column=0, padx=10, pady=10)
 
         # Price Entry
         self.price_entry = tk.Entry(self.root, width=30)
-        self.price_entry.grid(row=2, column=1)
+        self.price_entry.grid(row=2, column=1, padx=10, pady=10)
 
         # Supplier Info Label
         self.supplier_label = tk.Label(self.root, text="Supplier Info")
-        self.supplier_label.grid(row=3, column=0)
+        self.supplier_label.grid(row=3, column=0, padx=10, pady=10)
 
         # Supplier Info Entry
         self.supplier_entry = tk.Entry(self.root, width=30)
-        self.supplier_entry.grid(row=3, column=1)
-
-        # Category Label
-        self.product_category_label = tk.Label(self.root, text="Category")
-        self.product_category_label.grid(row=4, column=0)
-
-        # Category Entry
-        self.product_category_entry = tk.Entry(self.root, width=30)
-        self.product_category_entry.grid(row=4, column=1)
+        self.supplier_entry.grid(row=3, column=1, padx=10, pady=10)
 
         # Additional Attributes Label
         self.attributes_label = tk.Label(self.root, text="Additional Attributes (key:value, comma separated)")
-        self.attributes_label.grid(row=5, column=0)
+        self.attributes_label.grid(row=4, column=0, padx=10, pady=10)
 
         # Additional Attributes Entry
         self.attributes_entry = tk.Entry(self.root, width=30)
-        self.attributes_entry.grid(row=5, column=1)
+        self.attributes_entry.grid(row=4, column=1, padx=10, pady=10)
 
         # Add Product Button
         self.add_product_button = tk.Button(self.root, text="Add Product", command=self.add_product)
-        self.add_product_button.grid(row=6, column=1)
+        self.add_product_button.grid(row=5, column=1, padx=10, pady=10)
+
+        # Delete Product Button
+        self.delete_product_button = tk.Button(self.root, text="Delete Product", command=self.delete_product)
+        self.delete_product_button.grid(row=6, column=1, padx=10, pady=10)
+
+        # Change Category Button
+        self.change_category_button = tk.Button(self.root, text="Change Category", command=self.change_category)
+        self.change_category_button.grid(row=7, column=1, padx=10, pady=10)
 
         # Create a Frame for Table and Scrollbars
         self.frame = tk.Frame(self.root)
-        self.frame.grid(row=7, column=0, columnspan=3, sticky="nsew")
+        self.frame.grid(row=8, column=0, columnspan=3, sticky="nsew")
 
         # Table View
         self.columns = ("Name", "Price", "Supplier", "Inventory Level", "Total Value", "Category", "Additional Info")
@@ -106,8 +112,22 @@ class InventoryGUI:
         self.frame.grid_rowconfigure(0, weight=1)
         self.frame.grid_columnconfigure(0, weight=1)
 
+        # Bind item selection event
+        self.tree.bind("<<TreeviewSelect>>", self.on_item_selected)
+
         # Initialize product display
         self.refresh_products()
+
+    def on_category_selected(self, event):
+        # When category is selected, refresh product list
+        self.refresh_products()
+
+    def add_new_category(self):
+        new_category = simpledialog.askstring("New Category", "Enter the new category name:")
+        if new_category and new_category not in self.categories:
+            self.categories.append(new_category)
+            self.category_combo['values'] = self.categories
+            self.category_combo.set(new_category)
 
     def add_product(self):
         name = self.name_entry.get()
@@ -117,7 +137,7 @@ class InventoryGUI:
             messagebox.showwarning("Input Error", "Price must be a number")
             return
         supplier_info = self.supplier_entry.get()
-        category = self.product_category_entry.get()
+        category = self.category_combo.get()
         additional_attributes = self.attributes_entry.get()
 
         if not name or not price or not supplier_info or not category:
@@ -140,19 +160,37 @@ class InventoryGUI:
         self.inventory_manager.add_product(product)
         self.refresh_products()
 
-    def refresh_products(self, event=None):
-        # Clear previous products in the table
-        for i in self.tree.get_children():
-            self.tree.delete(i)
+    def delete_product(self):
+        if self.selected_product_name:
+            self.inventory_manager.delete_product(self.selected_product_name)
+            self.refresh_products()
+            self.selected_product_name = None  # Reset selection
+        else:
+            messagebox.showwarning("Selection Error", "No product selected for deletion")
 
-        # Filter by category
-        category = self.category_var.get()
-        if category == "All":
+    def change_category(self):
+        if self.selected_product_name:
+            new_category = simpledialog.askstring("Change Category", "Enter new category for the selected product:")
+            if new_category:
+                self.inventory_manager.update_product_category(self.selected_product_name, new_category)
+                self.refresh_products()
+        else:
+            messagebox.showwarning("Selection Error", "No product selected for category change")
+
+    def on_item_selected(self, event):
+        selected_item = self.tree.selection()[0]
+        self.selected_product_name = self.tree.item(selected_item, 'values')[0]
+
+    def refresh_products(self):
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        category = self.category_combo.get()
+        if category == "Select Category":
             products = self.inventory_manager.get_all_products()
         else:
             products = self.inventory_manager.get_products_by_category(category)
 
-        # Display all products
         for product in products:
             self.tree.insert("", "end", values=(
                 product.name,
@@ -164,37 +202,3 @@ class InventoryGUI:
                 ', '.join([f"{key}: {value}" for key, value in product.additional_attributes.items()])
             ))
 
-        # Adjust scrolling
-        self.tree.update_idletasks()
-
-if __name__ == "__main__":
-    import tkinter as tk
-    from inventory_manager import InventoryManager
-    from product import Product
-
-    def main():
-        # Create the main window
-        root = tk.Tk()
-        
-        # Create an InventoryManager instance
-        inventory_manager = InventoryManager()
-        
-        # Add default products
-        default_products = [
-            Product(name="Laptop", price=999.99, supplier_info="Tech Supplier Co.", category="Electronics", brand="BrandX", warranty="2 years"),
-            Product(name="Sofa", price=499.99, supplier_info="Home Furnishings Inc.", category="Furniture", material="Leather", dimensions="3x2x1.5 m"),
-            Product(name="Organic Apples", price=2.99, supplier_info="Fresh Farms", category="Grocery", expiration_date="2024-12-01"),
-            Product(name="Smartphone", price=699.99, supplier_info="Gadget World", category="Electronics", brand="BrandY", warranty="1 year"),
-            Product(name="Dining Table", price=299.99, supplier_info="Furniture HQ", category="Furniture", material="Wood", dimensions="1.8x1 m")
-        ]
-        
-        for product in default_products:
-            inventory_manager.add_product(product)
-        
-        # Create the GUI instance
-        gui = InventoryGUI(root, inventory_manager)
-        
-        # Start the main event loop
-        root.mainloop()
-
-    main()

@@ -1,5 +1,3 @@
-# inventory_manager.py
-
 from product import Product
 
 class InventoryManager:
@@ -9,21 +7,17 @@ class InventoryManager:
     def add_product(self, product):
         self.products.append(product)
 
-    def update_inventory(self, product_name, amount):
-        for product in self.products:
-            if product.name == product_name:
-                product.update_inventory(amount)
-                return
-        raise ValueError("Product not found")
+    def delete_product(self, name):
+        self.products = [product for product in self.products if product.name != name]
 
-    def calculate_total_value(self):
-        total_value = 0
+    def update_product_category(self, name, new_category):
         for product in self.products:
-            total_value += product.get_total_value()
-        return total_value
-
-    def get_products_by_category(self, category):
-        return [product for product in self.products if product.category == category]
+            if product.name == name:
+                product.update_category(new_category)
+                break
 
     def get_all_products(self):
         return self.products
+
+    def get_products_by_category(self, category):
+        return [product for product in self.products if product.category == category]

@@ -1,5 +1,3 @@
-# product.py
-
 class Product:
     def __init__(self, name, price, supplier_info, category, **kwargs):
         self.name = name
@@ -17,6 +15,9 @@ class Product:
 
     def get_total_value(self):
         return self._inventory_level * self.price
+
+    def update_category(self, new_category):
+        self.category = new_category
 
     def __str__(self):
         attributes = ', '.join([f"{key}: {value}" for key, value in self.additional_attributes.items()])

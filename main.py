@@ -1,5 +1,3 @@
-# main.py
-
 import tkinter as tk
 from inventory_manager import InventoryManager
 from gui import InventoryGUI
